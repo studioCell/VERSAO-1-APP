@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlyerState, ThemeType } from '../types';
 import { THEME_LOGOS, PHONE_MODELS } from '../constants';
-import { CheckCircle, Phone, MapPin } from 'lucide-react';
+import { CheckCircle, Phone, MapPin, Loader2 } from 'lucide-react';
 
 interface FlyerPreviewProps {
   data: FlyerState;
@@ -15,6 +15,19 @@ const FlyerPreview: React.FC<FlyerPreviewProps> = ({ data, previewId }) => {
 
   // Resolve Phone Image
   const phoneImage = data.customProductImage || PHONE_MODELS[data.brand]?.[data.model]?.img || '';
+
+  // Image Loading States
+  const [isProductImageLoaded, setIsProductImageLoaded] = useState(false);
+  const [isLogoLoaded, setIsLogoLoaded] = useState(false);
+
+  // Reset loading state when image source changes
+  useEffect(() => {
+    setIsProductImageLoaded(false);
+  }, [phoneImage]);
+
+  useEffect(() => {
+    setIsLogoLoaded(false);
+  }, [logoUrl]);
 
   // Dynamic Styles
   const bgStyle = isChristmas 
@@ -118,16 +131,27 @@ const FlyerPreview: React.FC<FlyerPreviewProps> = ({ data, previewId }) => {
              {/* Imagem do Produto Wrapper */}
              <div className={`relative w-full flex-1 min-h-0 flex flex-col items-center transition-all duration-500 ${isPriceHidden ? 'justify-start' : 'justify-end'}`}>
                {phoneImage ? (
+                  <>
+                   {/* Loader Spinner */}
+                   {!isProductImageLoaded && (
+                     <div className="absolute inset-0 flex items-center justify-center z-0">
+                       <Loader2 className="w-10 h-10 text-white animate-spin opacity-50" />
+                     </div>
+                   )}
                    <img 
                      src={phoneImage}
                      alt="Product"
                      crossOrigin="anonymous"
-                     className={`object-contain drop-shadow-2xl w-auto origin-bottom
+                     loading="lazy"
+                     onLoad={() => setIsProductImageLoaded(true)}
+                     className={`object-contain drop-shadow-2xl w-auto origin-bottom transition-opacity duration-700 ease-in-out
+                       ${isProductImageLoaded ? 'opacity-100' : 'opacity-0'}
                        ${isPriceHidden 
                           ? 'max-h-[85%] scale-105' 
-                          : 'max-h-[60%] scale-90 pb-4' // REVERTIDO: Tamanho equilibrado
+                          : 'max-h-[60%] scale-90 pb-4'
                        }`}
                    />
+                  </>
                ) : (
                   <div className="w-full h-full max-h-48 flex items-center justify-center">
                     <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center text-white/50 border-2 border-dashed border-white/20">
@@ -200,7 +224,20 @@ const FlyerPreview: React.FC<FlyerPreviewProps> = ({ data, previewId }) => {
             {/* Logo Personalizada (Esquerda) - AJUSTE DE POSIÇÃO */}
             <div className="shrink-0 -ml-4 -mb-[30px] w-32 h-32 relative z-40 flex items-center justify-center">
                {data.showLogo && logoUrl ? (
-                <img src={logoUrl} alt="Store Logo" className="max-w-full max-h-full object-contain drop-shadow-md" />
+                <>
+                  {!isLogoLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white/50 animate-spin" />
+                    </div>
+                  )}
+                  <img 
+                    src={logoUrl} 
+                    alt="Store Logo" 
+                    loading="lazy"
+                    onLoad={() => setIsLogoLoaded(true)}
+                    className={`max-w-full max-h-full object-contain drop-shadow-md transition-opacity duration-500 ${isLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
+                  />
+                </>
               ) : <div className="w-full h-full"></div>}
             </div>
 
